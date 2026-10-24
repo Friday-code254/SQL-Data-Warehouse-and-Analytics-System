@@ -110,6 +110,4 @@ The 38 sales rejects have recorded reason codes. Their source amounts account fo
 - Each run loads a complete snapshot; there is no change data capture or partial-file loading.
 - SCD Type 2 effective dates record when the warehouse saw a change, not when it happened in the source.
 
-## Project background
 
-The project is based on the SQL Data Warehouse tutorial structure and sample dataset by Baraa Khatib Salkini. This repository adds a documented full-snapshot pipeline, data quality checks, SCD Type 2 dimensions, reconciliation, and a small set of curated analytics queries.
