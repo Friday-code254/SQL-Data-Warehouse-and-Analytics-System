@@ -121,6 +121,21 @@ jobs:
           SQLSERVER_LOCAL_DATASET_ROOT: ${{ github.workspace }}/01_datasets
         run: python -m unittest discover -s 04_tests/integration -p "test_*.py" -v
 
+      - name: Report SQL pipeline failure details
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          docker exec warehouse-ci /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -d DataWarehouse \
+            -Q "SET NOCOUNT ON;
+                SELECT TOP (3) run_id,status,error_number,error_procedure,error_line,error_summary
+                FROM etl.pipeline_runs ORDER BY started_at DESC;
+                SELECT TOP (12) run_id,layer,table_name,status,error_summary
+                FROM etl.table_load_logs ORDER BY table_load_log_id DESC;
+                SELECT TOP (20) run_id,layer,test_name,severity,outcome,actual_result,failure_reason
+                FROM etl.data_quality_results ORDER BY result_id DESC;"
+
       - name: Remove disposable SQL Server
         if: always()
         run: docker rm -f warehouse-ci || true
