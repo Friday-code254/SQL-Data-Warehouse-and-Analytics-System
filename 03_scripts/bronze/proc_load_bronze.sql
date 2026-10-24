@@ -23,7 +23,10 @@ BEGIN
             @line_terminator nvarchar(4),
             @actual_hash char(64), @actual_size bigint, @row_error nvarchar(2048);
     SET @separator = CASE WHEN LEFT(@dataset_root,1)=N'/' THEN N'/' ELSE N'\' END;
-    SET @codepage_option=N', CODEPAGE=''65001''';
+    /* CODEPAGE is not supported for SQL Server bulk loads on Linux. SQL Server on
+       Windows still needs UTF-8 explicitly for these source CSV files. */
+    SET @codepage_option=CASE WHEN LOWER(CONVERT(nvarchar(128),SERVERPROPERTY('HostPlatform')))=N'linux'
+        THEN N'' ELSE N', CODEPAGE=''65001''' END;
 
     CREATE TABLE #manifest (
         source_key sysname NOT NULL PRIMARY KEY, relative_path nvarchar(260) NOT NULL,

@@ -56,7 +56,7 @@ jobs:
             -e ACCEPT_EULA=Y \
             -e "MSSQL_SA_PASSWORD=$password" \
             -p 14330:1433 \
-            -v "$GITHUB_WORKSPACE/01_datasets:/var/opt/mssql/datasets" \
+            -v "$GITHUB_WORKSPACE/01_datasets:/tmp/warehouse-datasets:ro" \
             -v "$GITHUB_WORKSPACE:/workspace:ro" \
             mcr.microsoft.com/mssql/server:2022-latest
           ready=0
@@ -72,6 +72,8 @@ jobs:
             docker logs warehouse-ci
             exit 1
           fi
+          docker exec --user 0 warehouse-ci \
+            /opt/mssql/bin/mssql-conf set bulkadmin.allowedpathslist "/tmp/warehouse-datasets"
 
       - name: Install warehouse schema
         run: >-
@@ -87,7 +89,7 @@ jobs:
           SQLSERVER_USER: sa
           SQLSERVER_ENCRYPT: "yes"
           SQLSERVER_TRUST_CERTIFICATE: "yes"
-          SQLSERVER_DATASET_ROOT: /var/opt/mssql/datasets
+          SQLSERVER_DATASET_ROOT: /tmp/warehouse-datasets
         run: python 03_scripts/etl/run_pipeline.py
 
       - name: Run smoke and analytics SQL
@@ -117,7 +119,7 @@ jobs:
           SQLSERVER_USER: sa
           SQLSERVER_ENCRYPT: "yes"
           SQLSERVER_TRUST_CERTIFICATE: "yes"
-          SQLSERVER_DATASET_ROOT: /var/opt/mssql/datasets
+          SQLSERVER_DATASET_ROOT: /tmp/warehouse-datasets
           SQLSERVER_LOCAL_DATASET_ROOT: ${{ github.workspace }}/01_datasets
         run: python -m unittest discover -s 04_tests/integration -p "test_*.py" -v
 

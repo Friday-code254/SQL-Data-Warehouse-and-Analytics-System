@@ -59,6 +59,7 @@ BEGIN
         SET @stage_ended=SYSUTCDATETIME();
         SELECT @err=ERROR_NUMBER(),@proc=ERROR_PROCEDURE(),@line=ERROR_LINE();
         SET @summary=CASE WHEN @stage=N'quality' THEN N'Critical quality validation failed. See persisted test results.'
+            WHEN @stage=N'bronze' AND @err=16202 THEN CONCAT(N'Bronze source staging failed: ',ERROR_MESSAGE())
             WHEN @stage=N'bronze' THEN CONCAT(N'Bronze source staging failed (SQL error ',@err,N'). Check source file access and etl configuration.')
             ELSE CONCAT(@stage,N' stage failed (SQL error ',@err,N'). Source row values are omitted from the audit message.') END;
         SET @dq_payload_bytes=TRY_CONVERT(varbinary(8000),SESSION_CONTEXT(N'dq_payload'));
